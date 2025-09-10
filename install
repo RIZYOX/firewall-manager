@@ -1,0 +1,113 @@
+#!/bin/bash
+
+# Vérifier les droits root
+if [ "$EUID" -ne 0 ]; then 
+    echo "❌ Exécutez avec sudo : sudo $0"
+    exit 1
+fi
+
+# Couleurs
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo ""
+echo " _____ _ _       _ _                   "
+echo "|  ___(_) | __ _| | | ___ _ __ ___    "
+echo "| |_  | | |/ _\` | | |/ _ \ '__/ __|  "
+echo "|  _| | | | (_| | | |  __/ |  \__ \  "
+echo "|_|   |_|_|\__,_|_|_|\___|_|  |___/ "
+echo ""
+echo "=== Installation de Firewall Manager ==="
+echo ""
+
+# Demander l'adresse email de l'administrateur
+read -p "📧 Email administrateur : " ADMIN_EMAIL
+
+# Demander la clé API Mistral
+read -p "🔑 Clé API Mistral : " MISTRAL_API_KEY
+
+# Installation des dépendances
+echo ""
+echo "📦 Installation des dépendances..."
+apt-get update
+apt-get install -y python3 python3-pip python3-venv ufw git
+
+# Création du répertoire
+mkdir -p /opt/firewall-manager
+cd /opt/firewall-manager
+
+# Clonage du dépôt
+echo ""
+echo "⬇️  Téléchargement de l'application..."
+git clone https://github.com/votre-utilisateur/firewall-manager.git .
+
+# Configuration de l'environnement
+echo ""
+echo "🔧 Configuration..."
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Création du fichier de configuration
+cat > .env <<EOL
+SECRET_KEY=$(openssl rand -hex 32)
+HOST=0.0.0.0
+PORT=8000
+DATABASE_URL=sqlite:////opt/firewall-manager/firewall.db
+MISTRAL_API_KEY=${MISTRAL_API_KEY}
+ADMIN_EMAIL=${ADMIN_EMAIL}
+EOL
+
+# Configuration du service
+cat > /etc/systemd/system/firewall-manager.service <<EOL
+[Unit]
+Description=Firewall Manager
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/firewall-manager
+Environment="PATH=/opt/firewall-manager/venv/bin"
+ExecStart=/opt/firewall-manager/venv/bin/uvicorn app:app --host 0.0.0.0 --port 8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Démarrer le service
+echo ""
+echo "🚀 Démarrage du service..."
+systemctl daemon-reload
+systemctl enable firewall-manager
+systemctl start firewall-manager
+
+# Configuration du pare-feu
+echo ""
+echo "🔥 Configuration du pare-feu..."
+ufw allow 8000/tcp
+ufw allow 22/tcp
+echo "y" | ufw enable > /dev/null 2>&1
+
+# Afficher les informations d'accès
+IP=$(hostname -I | awk '{print $1}')
+
+echo ""
+echo ""
+echo "${GREEN}✅ Installation terminée avec succès !${NC}"
+echo ""
+echo "========================================"
+echo "  🌐 URL d'accès : http://${IP}:8000"
+echo "  📧 Email admin : ${ADMIN_EMAIL}"
+echo "  🔑 Mot de passe : admin"
+echo ""
+echo "${YELLOW}⚠️  IMPORTANT : Changez le mot de passe après la première connexion${NC}"
+echo ""
+echo "🔧 Commandes utiles :"
+echo "   systemctl start|stop|restart firewall-manager"
+echo "   journalctl -u firewall-manager -f"
+echo "========================================"
+
+exit 0

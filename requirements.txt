@@ -1,0 +1,57 @@
+# Core
+fastapi==0.95.0
+uvicorn[standard]==0.21.1
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+
+# Database
+sqlalchemy==2.0.9
+alembic==1.10.3
+psycopg2-binary==2.9.6
+
+# Utils
+python-dateutil==2.8.2
+python-json-logger==2.0.6
+python-ulid==2.2.1
+pydantic[email]==1.10.7
+
+# Monitoring
+psutil==5.9.5
+
+# Testing
+pytest==7.3.1
+pytest-cov==4.0.0
+httpx==0.24.0
+
+# Linting
+black==23.3.0
+isort==5.12.0
+flake8==6.0.0
+mypy==1.2.0
+
+# Documentation
+mkdocs==1.4.2
+mkdocs-material==9.1.8
+
+# Optional: Pour le support JWT avancé
+PyJWT==2.6.0
+python-jose==3.3.0
+
+# Optional: Pour le support OAuth2
+itsdangerous==2.1.2
+python-jose[cryptography]==3.3.0
+
+# Optional: Pour le support LDAP
+python-ldap==3.4.2
+
+# Optional: Pour le support des requêtes HTTP
+httpx==0.24.0
+
+# Optional: Pour le support des tâches asynchrones
+celery==5.2.7
+redis==4.5.4
+
+# Optional: Pour le support des websockets
+websockets==11.0.1
